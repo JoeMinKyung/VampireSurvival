@@ -126,6 +126,8 @@ camera = Camera()
 
 # 스프라이트 그룹 (all_sprites = 모든 스프라이트를 저장할 변수)
 all_sprites = pygame.sprite.Group()
+# 장애물 그룹
+obstacles = pygame.sprite.Group()
 
 all_sprites.add(player)
 
@@ -134,6 +136,7 @@ for _ in range(20):
     y = random.randint(0, WORLD_HEIGHT)
     obstacle = Obstacle(x, y)
     all_sprites.add(obstacle)
+    obstacles.add(obstacle)
 
 # 게임 루프
 running = True
@@ -154,6 +157,9 @@ while running:
     player.update(dt)
     player.move(dx, dy)
 
+    if pygame.sprite.spritecollide(player, obstacles, False):
+        player.rect.x -= dx * player.speed
+        player.rect.y -= dy * player.speed
     camera.update(player)
 
     screen.fill(GREEN)
