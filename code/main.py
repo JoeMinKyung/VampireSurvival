@@ -40,6 +40,12 @@ obstacle_images = [
     pygame.image.load("data/graphics/objects/green_tree_small.png").convert_alpha(),
 ]
 
+enemy_images = {
+    "bat": load_images(os.path.join("images", "enemies", "bat")),
+    "blob": load_images(os.path.join("images", "enemies", "blob")),
+    "skeleton": load_images(os.path.join("images", "enemies", "skeleton")),
+}
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):  # 플레이어 위치 좌표로 초기화
@@ -154,6 +160,50 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, enemy_type):
+        super().__init__()
+        self.enemy_type = enemy_type
+        self.image = enemy_images[enemy_type][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.direction = pygame.Vector2()
+
+        self.animation_index = 0
+        self.animation_speed = 0.2
+        self.animation_time = 0
+        self.speed = 2
+
+    def update(self, dt):
+        self.move()
+
+        if self.direction.length():
+            self.animation_time += dt
+
+            if self.animation_time > self.animation_speed:
+                self.animation_time = 0
+                self.animation_index += 1
+                self.animation_index = self.animation_index % 4
+                self.image = enemy_images[self.enemy_type][self.animation_index]
+        else:
+            self.animation_index = 0
+            self.image = enemy_images[self.enemy_type][self.animation_index]
+
+    def move(self):
+        dx = player.rect.centerx - self.rect.centerx
+        dy = player.rect.centery - self.rect.centery
+
+        self.direction.x = dx
+        self.direction.y = dy
+
+        # 대각선 속도 보정
+        if self.direction.length() > 0:
+            self.direction = self.direction.normalize()
+
+        self.rect.x += self.direction.x * self.speed
+        self.rect.y += self.direction.y * self.speed
+
+
 # player initialization
 player = Player(WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
 
@@ -165,6 +215,8 @@ all_sprites = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
 # 총알 그룹
 bullets = pygame.sprite.Group()
+# 적 그룹
+enemies = pygame.sprite.Group()
 
 all_sprites.add(player)
 
@@ -175,9 +227,18 @@ for _ in range(20):
     all_sprites.add(obstacle)
     obstacles.add(obstacle)
 
+for _ in range(10):
+    x = random.randint(0, WORLD_WIDTH)
+    y = random.randint(0, WORLD_HEIGHT)
+    enemy_type = random.choice(["bat", "blob", "skeleton"])
+    enemy = Enemy(x, y, enemy_type)
+    all_sprites.add(enemy)
+    enemies.add(enemy)
+
 # 게임 루프
 running = True
 clock = pygame.time.Clock()
+enemy_timer = 0
 
 while running:
     # 초 당 60프레임
@@ -195,6 +256,7 @@ while running:
     player.move(dx, dy)
 
     bullets.update(dt)
+    enemies.update(dt)
 
     # 플레이어 충돌 체크
     if pygame.sprite.spritecollide(player, obstacles, False):
@@ -208,6 +270,18 @@ while running:
         new_bullets = player.shoot()
         bullets.add(new_bullets)
         all_sprites.add(new_bullets)
+
+    # 무작위 적 생성
+    enemy_timer += dt
+
+    if enemy_timer > 1:
+        enemy_timer = 0
+        enemy_type = random.choice(["bat", "blob", "skeleton"])
+        x = random.randint(0, WORLD_WIDTH)
+        y = random.randint(0, WORLD_HEIGHT)
+        new_enemy = Enemy(x, y, enemy_type)
+        all_sprites.add(new_enemy)
+        enemies.add(new_enemy)
 
     # 그리는 부분
     camera.update(player)
