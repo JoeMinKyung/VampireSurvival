@@ -6,6 +6,8 @@ pygame.init()
 
 WIDTH = 1280
 HEIGHT = 720
+WORLD_WIDTH = 2560
+WORLD_HEIGHT = 1440
 
 GREEN = (34, 139, 34)
 BLACK = (0, 0, 0)
@@ -88,8 +90,34 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.center = (x, y)
 
 
+class Camera:
+    def __init__(self):
+        self.camera = pygame.Rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+
+    def apply(self, entity):
+        return entity.rect.move(
+            self.camera.topleft
+        )  # 카메라의 topleft 기준으로 entity를 전부 move
+
+    # update 함수로 좌표 계산 후 apply 함수로 적용
+    def update(self, player):
+        x = WIDTH // 2 - player.rect.centerx
+        y = HEIGHT // 2 - player.rect.centery
+
+        # 카메라 제한
+        x = min(0, x)
+        y = min(0, y)
+
+        x = max(-WIDTH, x)
+        y = max(-HEIGHT, y)
+
+        self.camera = pygame.Rect(x, y, WORLD_WIDTH, WORLD_HEIGHT)
+
+
 # player initialization
-player = Player(WIDTH // 2, HEIGHT // 2)
+player = Player(WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
+
+camera = Camera()
 
 # 스프라이트 그룹 (all_sprites = 모든 스프라이트를 저장할 변수)
 all_sprites = pygame.sprite.Group()
@@ -97,8 +125,8 @@ all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
 for _ in range(20):
-    x = random.randint(0, WIDTH)
-    y = random.randint(0, WIDTH)
+    x = random.randint(0, WORLD_WIDTH)
+    y = random.randint(0, WORLD_HEIGHT)
     obstacle = Obstacle(x, y)
     all_sprites.add(obstacle)
 
@@ -121,9 +149,13 @@ while running:
     player.update(dt)
     player.move(dx, dy)
 
+    camera.update(player)
+
     screen.fill(GREEN)
 
-    all_sprites.draw(screen)
+    # all_sprites.draw(screen)
+    for sprite in all_sprites:
+        screen.blit(sprite.image, camera.apply(sprite))
 
     pygame.display.flip()
 
