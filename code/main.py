@@ -203,6 +203,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
 
+        if pygame.sprite.spritecollide(self, obstacles, False):
+            self.rect.x -= self.direction.x * self.speed
+            self.rect.y -= self.direction.y * self.speed
+
 
 # player initialization
 player = Player(WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
@@ -262,6 +266,14 @@ while running:
     if pygame.sprite.spritecollide(player, obstacles, False):
         player.rect.x -= dx * player.speed
         player.rect.y -= dy * player.speed
+
+    # 총알과 적의 충돌 체크
+    for bullet in bullets:
+        hit_enemies = pygame.sprite.spritecollide(bullet, enemies, True)
+        if hit_enemies:
+            bullet.kill()
+            for enemy in hit_enemies:
+                all_sprites.remove(enemy)
 
     # 총알 발사
     player.shoot_timer += dt * 1000
