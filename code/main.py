@@ -1,6 +1,7 @@
 import pygame
 import os
 import random
+import math
 
 pygame.init()
 
@@ -54,6 +55,9 @@ class Player(pygame.sprite.Sprite):
         self.animation_index = 0
         self.animation_time = 0
 
+        self.shoot_timer = 0
+        self.shoot_delay = 1000  # 1초
+
     def update(self, dt):
         if self.direction.length():
             self.animation_time += dt
@@ -85,6 +89,15 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
+
+    def shoot(self):
+        bullets = []
+
+        for angle in range(0, 360, 45):
+            state = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
+            bullet = Bullet(self.rect.centerx, self.rect.centery, state)
+            bullets.append(bullet)
+        return bullets
 
 
 class Obstacle(pygame.sprite.Sprite):
@@ -119,6 +132,28 @@ class Camera:
         self.camera = pygame.Rect(x, y, WORLD_WIDTH, WORLD_HEIGHT)
 
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        super().__init__()
+        self.image = pygame.Surface((10, 10))
+        self.image.fill(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 10
+        self.direction = direction
+        self.lifetime = 0.5
+        self.dtt = 0
+
+    def update(self, dt):
+        self.rect.x += self.direction[0] * self.speed
+        self.rect.y += self.direction[1] * self.speed
+
+        self.dtt += dt
+
+        if self.dtt > self.lifetime:
+            self.kill()
+
+
 # player initialization
 player = Player(WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
 
@@ -128,6 +163,8 @@ camera = Camera()
 all_sprites = pygame.sprite.Group()
 # 장애물 그룹
 obstacles = pygame.sprite.Group()
+# 총알 그룹
+bullets = pygame.sprite.Group()
 
 all_sprites.add(player)
 
@@ -157,9 +194,22 @@ while running:
     player.update(dt)
     player.move(dx, dy)
 
+    bullets.update(dt)
+
+    # 플레이어 충돌 체크
     if pygame.sprite.spritecollide(player, obstacles, False):
         player.rect.x -= dx * player.speed
         player.rect.y -= dy * player.speed
+
+    # 총알 발사
+    player.shoot_timer += dt * 1000
+    if player.shoot_timer >= player.shoot_delay:
+        player.shoot_timer = 0
+        new_bullets = player.shoot()
+        bullets.add(new_bullets)
+        all_sprites.add(new_bullets)
+
+    # 그리는 부분
     camera.update(player)
 
     screen.fill(GREEN)
