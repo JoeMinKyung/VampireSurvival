@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 
 pygame.init()
 
@@ -78,6 +79,15 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.direction.y * self.speed
 
 
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((64, 64))
+        self.image.fill(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
 # player initialization
 player = Player(WIDTH // 2, HEIGHT // 2)
 
@@ -85,6 +95,12 @@ player = Player(WIDTH // 2, HEIGHT // 2)
 all_sprites = pygame.sprite.Group()
 
 all_sprites.add(player)
+
+for _ in range(20):
+    x = random.randint(0, WIDTH)
+    y = random.randint(0, WIDTH)
+    obstacle = Obstacle(x, y)
+    all_sprites.add(obstacle)
 
 # 게임 루프
 running = True
