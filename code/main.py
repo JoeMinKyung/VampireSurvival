@@ -34,6 +34,12 @@ player_images = {
 }
 
 
+obstacle_images = [
+    pygame.image.load("data/graphics/objects/grassrock1.png").convert_alpha(),
+    pygame.image.load("data/graphics/objects/green_tree_small.png").convert_alpha(),
+]
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):  # 플레이어 위치 좌표로 초기화
         super().__init__()
@@ -84,8 +90,7 @@ class Player(pygame.sprite.Sprite):
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((64, 64))
-        self.image.fill(BLACK)
+        self.image = random.choice(obstacle_images)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
